@@ -2,18 +2,20 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { BiArrowBack } from "react-icons/bi"
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"
-import { CartReducerInitialState } from "../types/reducer-types";
-import { server } from "../redux/store";
+import { RootState, server } from "../redux/store";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { saveShippingInfo } from "../redux/reducer/cartReducer";
+import { CartReducerInitialState } from "../types/reducer-types";
 
 const Shipping = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
-    const { cartItems, total } = useSelector((state: { cartReducer: CartReducerInitialState }) => state.cartReducer)
+    const { user } = useSelector((state: RootState) => state.userReducer);
 
+    const { cartItems, coupon } = useSelector((state: { cartReducer: CartReducerInitialState }) => state.cartReducer)
+    // const { cartItems, coupon } = useSelector((state: RootState) => state.cartReducer);
 
     const [shippingInfo, setShippingInfo] = useState({
         address: "",
@@ -27,15 +29,18 @@ const Shipping = () => {
         setShippingInfo((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-// 
+    // 
     const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         dispatch(saveShippingInfo(shippingInfo))
         try {
-            const { data } = await axios.post(`${server}/api/v1/payment/create`, {
-                amount: total
-            }, {
+            const { data } = await axios.post(`${server}/api/v1/payment/create?id=${user?._id}`,
+                {
+                    items: cartItems,
+                    shippingInfo,
+                    coupon,
+                }, {
                 headers: {
                     "Content-Type": "application/json",
                 },
